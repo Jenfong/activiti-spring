@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<bean id="propertyConfigurer" class="com.casic.activiti.util.PropertyUtil">
+		<property name="locations">
+			<list>
+				<value>classpath*:/jdbc.properties</value>
+				<value>classpath*:/application.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${connection.driverclass}" />
+		<property name="jdbcUrl" value="${connection.url}" />
+		<property name="user" value="${connection.username}" />
+		<property name="password" value="${connection.password}" />
+		<property name="initialPoolSize" value="${connection.initialPoolSize}" />
+		<property name="minPoolSize" value="${connection.minPoolSize}" />
+		<property name="maxPoolSize" value="${connection.maxPoolSize}" />
+		<property name="maxIdleTime" value="${connection.maxIdleTime}" />
+		<property name="preferredTestQuery" value="${connection.preferredTestQuery}" />
+		<property name="idleConnectionTestPeriod" value="${connection.idleConnectionTestPeriod}" />
+		<property name="testConnectionOnCheckout" value="${connection.testConnectionOnCheckout}" />
+	</bean>
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="dataSource" />
+		</property>
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager"
+		proxy-target-class="true" />
+	<aop:config>
+		<aop:pointcut expression="execution(* com..service..*.*(..))"
+			id="productServiceMethods" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="productServiceMethods" />
+	</aop:config>
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="remove*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="find*" propagation="SUPPORTS" read-only="true" />
+			<tx:method name="get*" propagation="SUPPORTS" read-only="true" />
+			<tx:method name="*" rollback-for="java.lang.Exception" />
+		</tx:attributes>
+	</tx:advice>
+
+</beans>
