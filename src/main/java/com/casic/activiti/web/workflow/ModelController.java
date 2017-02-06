@@ -28,7 +28,7 @@ public class ModelController {
 	
 	
 	@RequestMapping(value = "/create")
-    public void login(@RequestParam("name") String name, @RequestParam("key") String key, @RequestParam("description") String description,HttpServletRequest request, HttpServletResponse response) {
+    public void create(@RequestParam("name") String name, @RequestParam("key") String key, @RequestParam("description") String description,HttpServletRequest request, HttpServletResponse response) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode editorNode = objectMapper.createObjectNode();
@@ -52,6 +52,17 @@ public class ModelController {
             repositoryService.addModelEditorSource(modelData.getId(), editorNode.toString().getBytes("utf-8"));
 
             response.sendRedirect(request.getContextPath() + "/modeler.html?modelId=" + modelData.getId());
+        } catch (Exception e) {
+            logger.error("创建模型失败：", e);
+        }
+    }
+	
+	
+	@RequestMapping(value = "/list")
+    public void list(HttpServletRequest request, HttpServletResponse response) {
+        try {
+        	
+        	
         } catch (Exception e) {
             logger.error("创建模型失败：", e);
         }
