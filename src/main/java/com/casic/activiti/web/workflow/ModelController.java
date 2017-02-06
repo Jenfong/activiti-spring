@@ -1,16 +1,23 @@
 package com.casic.activiti.web.workflow;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.activiti.bpmn.converter.BpmnXMLConverter;
+import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.editor.constants.ModelDataJsonConstants;
+import org.activiti.editor.language.json.converter.BpmnJsonConverter;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.Model;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,6 +34,7 @@ public class ModelController {
     RepositoryService repositoryService;
 	
 	
+	@SuppressWarnings("deprecation")
 	@RequestMapping(value = "/create")
     public void create(@RequestParam("name") String name, @RequestParam("key") String key, @RequestParam("description") String description,HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -37,6 +45,7 @@ public class ModelController {
             ObjectNode stencilSetNode = objectMapper.createObjectNode();
             stencilSetNode.put("namespace", "http://b3mn.org/stencilset/bpmn2.0#");
             editorNode.put("stencilset", stencilSetNode);
+            
             Model modelData = repositoryService.newModel();
 
             ObjectNode modelObjectNode = objectMapper.createObjectNode();
@@ -59,13 +68,30 @@ public class ModelController {
 	
 	
 	@RequestMapping(value = "/list")
-    public void list(HttpServletRequest request, HttpServletResponse response) {
-        try {
+    public String list(HttpServletRequest request, HttpServletResponse response) {
+        	List<Model> mlist = repositoryService.createModelQuery().list();
+        	request.setAttribute("list", mlist);
+			return "list";
         	
+    }
+	
+	@RequestMapping(value = "/deploy/{modelId}")
+    public String deploy(@PathVariable("modelId") String modelId,HttpServletRequest request, HttpServletResponse response) throws Exception{
         	
-        } catch (Exception e) {
-            logger.error("创建模型失败：", e);
-        }
+		 Model modelData = repositoryService.getModel(modelId);
+         ObjectNode modelNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(modelData.getId()));
+         byte[] bpmnBytes = null;
+
+         BpmnModel model = new BpmnJsonConverter().convertToBpmnModel(modelNode);
+         bpmnBytes = new BpmnXMLConverter().convertToXML(model);
+
+         String processName = modelData.getName() + ".bpmn20.xml";
+         Deployment deployment = repositoryService.createDeployment().name(modelData.getName()).addString(processName, new String(bpmnBytes)).deploy();
+		
+         System.out.println("部署成功，部署ID=" + deployment.getId());
+		
+		return "redirect:/workflow/list";
+        	
     }
 
 }

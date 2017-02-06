@@ -46,4 +46,9 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
     
     
   </body>
+  
+  	<a href="${rootURL }workflow/list">流程列表</a>
+  
+    <a href="${rootURL }dynamic/list">活动列表</a>
+  
 </html>
